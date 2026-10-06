@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eval": "tsx scripts/eval-badcases.ts",
+    "verify:ai": "tsx scripts/verify-ai.ts"
   },
   "dependencies": {
     "next": "^15.5.27",

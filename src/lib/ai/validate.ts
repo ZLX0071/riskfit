@@ -8,7 +8,8 @@ const SAFE_NUMBERS = new Set(["1", "2", "3", "10", "30", "95", "100"]);
 function collectNumbers(v: unknown, into: Set<string>, strings: string[] = []): string[] {
   if (typeof v === "number") {
     if (Number.isFinite(v)) {
-      for (const dp of [0, 1, 2, 3]) {
+      const dps = Math.abs(v) < 1 ? [0, 1, 2, 3, 4] : [0, 1, 2];
+      for (const dp of dps) {
         into.add(v.toFixed(dp));
         into.add((v * 100).toFixed(dp));
       }

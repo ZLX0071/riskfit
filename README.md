@@ -79,10 +79,18 @@ src/app/          落地页 + 体检流（编辑/进度/报告，报告可编码
 ```bash
 npm install
 npm run dev          # http://localhost:3000
-npm test             # 62 个单元测试
+npm test             # 72 个单元测试
+npm run eval         # badcase 评测集（引擎极端输入 / API 校验绕过 / 真实 LLM 对抗）
+npm run verify:ai    # 真实 AI 报告端到端验证
 npx tsx scripts/verify-engine.ts        # CLI 验证引擎真数据
 npx tsx scripts/generate-snapshots.ts   # 重新生成演示快照
 ```
+
+**评测体系**：单元测试之外，还有一套 badcase 回归评测（`scripts/eval-badcases.ts`，15 个用例）：
+- **A 层·引擎**：纯 crypto 组合、90% 极端集中、2/8 持仓边界、负相关对、零方差序列、2008 未上市资产代理、极端金额、校验器对抗
+- **B 层·API**：单持仓/未知代码/零金额/九持仓/负金额五类绕过尝试，全部 400 中文可读
+- **C 层·AI（真实模型）**：常规与极端组合下，LLM 输出必须通过数字溯源校验；违规典型——编造数字（99.9%）、换算单位（3.5 万）、由回撤率推算余额（"10 万跌至 16580"）——全部被拦截
+
 
 AI 层需要 `.env.local`（复制 `.env.example`），三个环境变量：`AI_API_KEY`（必填，缺失时自动降级为模板报告）、`AI_BASE_URL`（默认智谱 GLM `https://open.bigmodel.cn/api/paas/v4`，Qwen 用 `https://dashscope.aliyuncs.com/compatible-mode/v1`）、`AI_MODEL`（默认 `glm-4-flash`）。
 

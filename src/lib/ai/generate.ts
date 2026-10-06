@@ -25,6 +25,9 @@ export async function generateReport(engine: EngineOutput, opts: GenerateOpts = 
   const fetchImpl = opts.fetchImpl ?? fetch;
   const { system, user } = buildPrompt(engine);
   const attempts = opts.maxAttempts ?? 3; // 首发 + 重试 ≤2
+  // DashScope 的 qwen3+ 默认开思考模式：报告生成不需要，关闭以省时延与 token
+  const extra: Record<string, unknown> =
+    baseUrl.includes("dashscope") ? { enable_thinking: false } : {};
 
   for (let i = 0; i < attempts; i++) {
     try {
@@ -34,6 +37,7 @@ export async function generateReport(engine: EngineOutput, opts: GenerateOpts = 
         body: JSON.stringify({
           model,
           temperature: 0.2,
+          ...extra,
           messages: [
             { role: "system", content: system },
             { role: "user", content: user },

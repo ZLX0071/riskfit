@@ -44,6 +44,15 @@ describe("validateNumbers", () => {
     expect(validateNumbers(r, ENGINE)).toBe(true);
   });
 
+  test("引用人性化舍入形态（4 位小数比率 / 2 位小数金额）→ 通过", () => {
+    const r = ok(
+      "组合最大回撤 0.2756（即 27.56%），情景损失 35980 美元，年化波动率 0.2148。",
+      ["VaR 为 0.0219，即 2.19%。"],
+      ["你的储备能否扛住 27.56%？"],
+    );
+    expect(validateNumbers(r, ENGINE)).toBe(true);
+  });
+
   test("编造数字 → 拦截", () => {
     const r = ok("你的组合年化波动率 99.9%，建议立即清仓。");
     expect(validateNumbers(r, ENGINE)).toBe(false);

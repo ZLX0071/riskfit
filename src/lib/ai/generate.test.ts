@@ -67,6 +67,20 @@ function validateTemplated(t: { summary: string; riskPoints: string[]; selfCheck
 }
 
 describe("generateReport", () => {
+  test("DashScope 端点：请求体带 enable_thinking:false（报告生成不需要思考模式）", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(llmResponse(VALID));
+    await generateReport(ENGINE, { fetchImpl, apiKey: "k", baseUrl: "https://dashscope.aliyuncs.com/compatible-mode/v1", model: "qwen3.7-plus" });
+    const body = JSON.parse(fetchImpl.mock.calls[0][1].body);
+    expect(body.enable_thinking).toBe(false);
+  });
+
+  test("其他端点（GLM）：请求体不带 enable_thinking", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(llmResponse(VALID));
+    await generateReport(ENGINE, { fetchImpl, apiKey: "k", baseUrl: "https://open.bigmodel.cn/api/paas/v4", model: "glm-4-flash" });
+    const body = JSON.parse(fetchImpl.mock.calls[0][1].body);
+    expect("enable_thinking" in body).toBe(false);
+  });
+
   test("首次编造数字→重试后合法 → source=llm 且恰调用 2 次", async () => {
     const fetchImpl = vi
       .fn()
