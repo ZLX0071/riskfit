@@ -31,6 +31,7 @@ const ok = (summary: string, riskPoints: string[] = [], selfChecks: string[] = [
   summary,
   riskPoints: [...riskPoints, "风险点占位一。", "风险点占位二。", "风险点占位三。"].slice(0, Math.max(3, riskPoints.length)),
   selfChecks: [...selfChecks, "自查占位一。", "自查占位二。", "自查占位三。"].slice(0, Math.max(3, selfChecks.length)),
+  source: "llm",
 });
 
 describe("validateNumbers", () => {
@@ -54,6 +55,8 @@ describe("validateNumbers", () => {
   });
 
   test("非结构化输出（字段缺失）→ 拦截", () => {
-    expect(validateNumbers({ summary: "", riskPoints: ["只有一条"], selfChecks: [] }, ENGINE)).toBe(false);
+    expect(
+      validateNumbers({ summary: "", riskPoints: ["只有一条"], selfChecks: [], source: "llm" }, ENGINE),
+    ).toBe(false);
   });
 });

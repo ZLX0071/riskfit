@@ -1,7 +1,8 @@
 // /api/check 核心逻辑（依赖注入以便测试）。校验规则：spec §7；错误文案 PRD §4 US2。
 
-import type { AiReport, AssetDef, EngineOutput, Position, PriceSeries } from "@/lib/types";
+import type { AiReport, EngineOutput, Position, PriceSeries } from "@/lib/types";
 import { findAsset, BENCHMARK_SYMBOLS } from "@/lib/assets";
+import type { AssetDef } from "@/lib/assets";
 import { resolveSeries as defaultResolver } from "@/lib/data/resolver";
 import { composeFromSeries } from "@/lib/engine";
 import { generateReport as defaultGenerate } from "@/lib/ai/generate";

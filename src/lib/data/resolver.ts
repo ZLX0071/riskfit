@@ -1,7 +1,8 @@
 // 三级兜底链：cache → live（成功回写缓存）→ snapshot。任何一级失败不向上抛，除非全链无数据。
 // spec §7；Review Focus #1。
 
-import type { AssetDef, PriceSeries } from "@/lib/types";
+import type { PriceSeries } from "@/lib/types";
+import type { AssetDef } from "@/lib/assets";
 import { TTLCache } from "./cache";
 import { fetchStockDaily } from "./yahoo";
 import { fetchCryptoDaily } from "./binance";
