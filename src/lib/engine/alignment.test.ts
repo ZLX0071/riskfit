@@ -37,10 +37,12 @@ describe("alignSeries", () => {
     ]);
     expect(r.returns["AAPL"]).toHaveLength(4);
     expect(r.returns["BTC"]).toHaveLength(4);
-    // crypto 10-06 用自身价 51000（10-05 为 50500）→ 首个收益 = 500/50500
-    expect(r.returns["BTC"][0]).toBeCloseTo(51000 / 50500 - 1, 10);
-    // 10-08 的 crypto 收益用 10-08 自身价：51500/52000 - 1
-    expect(r.returns["BTC"][2]).toBeCloseTo(51500 / 52000 - 1, 10);
+    // returns[i] = 对齐日历上第 i+1 天相对第 i 天
+    expect(r.returns["AAPL"][0]).toBeCloseTo(0.02, 10);
+    // 对齐后 BTC：10-06→51000（自身价），首个收益 = 10-07 的 52000 / 51000 - 1
+    expect(r.returns["BTC"][0]).toBeCloseTo(52000 / 51000 - 1, 10);
+    // 10-08 的 51500 / 10-07 的 52000 - 1（前向填充未污染，10-08 有自身报价）
+    expect(r.returns["BTC"][1]).toBeCloseTo(51500 / 52000 - 1, 10);
     for (const arr of [r.returns["AAPL"], r.returns["BTC"]]) {
       for (const v of arr) expect(Number.isFinite(v)).toBe(true);
     }
