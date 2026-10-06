@@ -1,4 +1,4 @@
-# RiskCheckup（组合风险体检台）设计方案
+# RiskFit（风险体检台）设计方案
 
 - 日期：2026-10-06
 - 状态：待用户确认
@@ -140,4 +140,4 @@
 
 ## 12. 命名
 
-默认 **RiskCheckup**（中文：组合风险体检台），repo 名 `risk-checkup`。可随时改名，不阻塞开发。
+**RiskFit**（中文：风险体检台）。`Fit` 一语双关：既是"体质"（呼应招牌功能"风险体质分"），也是组合适配；英文 tagline："A health checkup for your portfolio"。GitHub repo 名 `riskfit`。2026-10-06 查证无知名公司/产品重名。
