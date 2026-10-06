@@ -84,7 +84,7 @@ npx tsx scripts/verify-engine.ts        # CLI 验证引擎真数据
 npx tsx scripts/generate-snapshots.ts   # 重新生成演示快照
 ```
 
-AI 层需要 `.env.local`（见 `.env.example`）：GLM 或 DashScope/Qwen 的 key 均可，未配置时自动降级为模板报告。
+AI 层需要 `.env.local`（复制 `.env.example`），三个环境变量：`AI_API_KEY`（必填，缺失时自动降级为模板报告）、`AI_BASE_URL`（默认智谱 GLM `https://open.bigmodel.cn/api/paas/v4`，Qwen 用 `https://dashscope.aliyuncs.com/compatible-mode/v1`）、`AI_MODEL`（默认 `glm-4-flash`）。
 
 ## Roadmap
 
