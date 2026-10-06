@@ -53,7 +53,10 @@ describe("makeResolver / resolveSeries", () => {
   test("crypto y2008：live 无数据且无快照 → 抛错；metrics 正常走 live", async () => {
     const BTC = { symbol: "BTC", name: "比特币", type: "CRYPTO" as const, providerSymbol: "BTCUSDT", hasSnapshot: true };
     const deps = makeDeps({
-      fetchCrypto: vi.fn().mockRejectedValue(new Error("binance: too few points")),
+      fetchCrypto: vi
+        .fn()
+        .mockRejectedValueOnce(new Error("binance: too few points"))
+        .mockResolvedValue(LIVE),
       loadSnapshot: vi.fn().mockReturnValue(undefined),
     });
     await expect(makeResolver(deps).resolveSeries(BTC, "y2008")).rejects.toThrow();
