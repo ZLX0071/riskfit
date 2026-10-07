@@ -8,3 +8,7 @@ next-env.d.ts
 .superpowers/
 .DS_Store
 .vercel
+
+# 面试材料只存本地，禁止入库（2026-10-07 曾误推一次）
+面试*.md
+*话术*.md
