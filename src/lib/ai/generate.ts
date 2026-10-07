@@ -14,9 +14,12 @@ export interface GenerateOpts {
   baseUrl?: string;
   model?: string;
   maxAttempts?: number;
+  /** 预算熔断：true 时跳过 LLM 直接用模板（滥用防护，spec §7 安全补丁）。 */
+  forceTemplate?: boolean;
 }
 
 export async function generateReport(engine: EngineOutput, opts: GenerateOpts = {}): Promise<AiReport> {
+  if (opts.forceTemplate) return templateReport(engine);
   const apiKey = opts.apiKey ?? process.env.AI_API_KEY;
   if (!apiKey) return templateReport(engine); // 未配置 key：直接模板，报告永不空白
 
@@ -34,6 +37,7 @@ export async function generateReport(engine: EngineOutput, opts: GenerateOpts = 
       const res = await fetchImpl(`${baseUrl}/chat/completions`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(30_000), // 挂起的 LLM 调用不得占住 serverless 函数
         body: JSON.stringify({
           model,
           temperature: 0.2,

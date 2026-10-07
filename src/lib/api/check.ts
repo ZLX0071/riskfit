@@ -7,13 +7,18 @@ import { resolveSeries as defaultResolver } from "@/lib/data/resolver";
 import { composeFromSeries } from "@/lib/engine";
 import { generateReport as defaultGenerate } from "@/lib/ai/generate";
 import { cumulativeReturn } from "@/lib/engine/metrics";
+import type { RateLimiter, DailyBudget } from "@/lib/security/guard";
 
 type DataWindow = "metrics" | "y2008" | "y2022";
 
 export interface CheckDeps {
   resolveSeries: (asset: AssetDef, window: DataWindow) => Promise<{ series: PriceSeries; mode: "live" | "cache" | "snapshot" }>;
   compose: typeof composeFromSeries;
-  generateReport: (engine: EngineOutput) => Promise<AiReport>;
+  generateReport: (engine: EngineOutput, opts?: { forceTemplate?: boolean }) => Promise<AiReport>;
+  /** 滥用防护（生产注入，测试可跳过）：每 IP 限流 + AI 日预算。 */
+  limiter?: RateLimiter;
+  aiBudget?: DailyBudget;
+  ip?: string;
 }
 
 const json = (body: unknown, status: number) =>
@@ -27,6 +32,16 @@ export async function handleCheck(
     generateReport: defaultGenerate,
   },
 ): Promise<Response> {
+  // 滥用防护第一层：每 IP 限流（2 次/分钟、6 次/小时）
+  if (deps.limiter && deps.ip) {
+    const a = deps.limiter.allow(deps.ip);
+    if (!a.ok) {
+      return json(
+        { error: a.reason === "minute" ? "操作太频繁啦，每分钟最多体检 2 次，喝口水稍等一下" : "你今天的体检次数已达上限，明天再来吧" },
+        429,
+      );
+    }
+  }
   const raw = Array.isArray(body?.positions) ? body.positions : [];
 
   // 校验 + 归一 + 合并重复代码
@@ -96,6 +111,8 @@ export async function handleCheck(
   const dataMode = modes.includes("snapshot") ? "snapshot" : modes.includes("cache") ? "cache" : "live";
   engine.dataMode = dataMode;
 
-  const ai = await deps.generateReport(engine);
+  // 滥用防护第二层：AI 日预算——超出当日额度自动切模板，站点不停、只停花钱的部分
+  const forceTemplate = deps.aiBudget ? !deps.aiBudget.spend() : false;
+  const ai = await deps.generateReport(engine, { forceTemplate });
   return json({ engine, ai }, 200);
 }

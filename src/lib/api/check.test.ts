@@ -1,5 +1,5 @@
-import { describe, expect, test, vi } from "vitest";
-import { handleCheck } from "./check";
+import { describe, expect, test, vi, type Mock } from "vitest";
+import { handleCheck, type CheckDeps } from "./check";
 import type { PriceSeries } from "@/lib/types";
 
 function genSeries(symbol: string): PriceSeries {
@@ -14,7 +14,7 @@ function genSeries(symbol: string): PriceSeries {
   return { symbol, dates, closes };
 }
 
-function makeDeps() {
+function makeDeps(): CheckDeps & { resolveSeries: Mock; compose: Mock; generateReport: Mock } {
   const series = genSeries("X");
   return {
     resolveSeries: vi.fn().mockImplementation((asset, window) => {
@@ -89,5 +89,40 @@ describe("handleCheck", () => {
     );
     expect(res.status).toBe(502);
     expect((await res.json()).error).toContain("暂不可用");
+  });
+
+  test("限流命中 → 429 中文错误（滥用防护）", async () => {
+    const deps = makeDeps();
+    deps.limiter = { allow: () => ({ ok: false as const, reason: "minute" as const }) };
+    deps.ip = "1.2.3.4";
+    const res = await handleCheck(
+      { positions: [{ symbol: "AAPL", amountUsd: 1000 }, { symbol: "MSFT", amountUsd: 1000 }] },
+      deps,
+    );
+    expect(res.status).toBe(429);
+    expect((await res.json()).error).toContain("频繁");
+  });
+
+  test("AI 日预算耗尽 → 报告仍 200 但回退模板（不烧 key）", async () => {
+    const deps = makeDeps();
+    deps.aiBudget = { spend: () => false };
+    const res = await handleCheck(
+      { positions: [{ symbol: "AAPL", amountUsd: 1000 }, { symbol: "MSFT", amountUsd: 1000 }] },
+      deps,
+    );
+    expect(res.status).toBe(200);
+    expect(deps.generateReport).toHaveBeenCalledWith(expect.anything(), { forceTemplate: true });
+    const body = await res.json();
+    expect(body.ai.source).toBe("template");
+  });
+
+  test("预算正常时 generateReport 不带 forceTemplate", async () => {
+    const deps = makeDeps();
+    deps.aiBudget = { spend: () => true };
+    await handleCheck(
+      { positions: [{ symbol: "AAPL", amountUsd: 1000 }, { symbol: "MSFT", amountUsd: 1000 }] },
+      deps,
+    );
+    expect(deps.generateReport).toHaveBeenCalledWith(expect.anything(), { forceTemplate: false });
   });
 });
