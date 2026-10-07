@@ -8,6 +8,7 @@ export type EventName =
   | "report_completed"
   | "report_scrolled_bottom"
   | "ai_disclosure_open"
+  | "share_card_open"
   | "report_failed";
 
 export interface TrackedEvent {
