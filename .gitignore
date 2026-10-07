@@ -7,3 +7,4 @@ out/
 next-env.d.ts
 .superpowers/
 .DS_Store
+.vercel
