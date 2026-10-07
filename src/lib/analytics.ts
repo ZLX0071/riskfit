@@ -23,6 +23,27 @@ let anonId: string | null = null;
 
 const STRIPPED_KEYS = new Set(["amountUsd", "amount", "usd"]);
 
+/** 落库分发器：生产环境由 Vercel Analytics 承载，测试可注入 mock。 */
+type Dispatcher = (event: EventName, props: Record<string, unknown>) => void;
+let dispatcher: Dispatcher | null = null;
+
+export function setDispatcher(fn: Dispatcher | null): void {
+  dispatcher = fn;
+}
+
+function defaultDispatcher(event: EventName, props: Record<string, unknown>): void {
+  if (typeof window === "undefined") return;
+  // Vercel Analytics 只接受 string|number|boolean|null，其余值丢弃
+  const clean = Object.fromEntries(
+    Object.entries(props).filter(([, v]) => ["string", "number", "boolean"].includes(typeof v)),
+  );
+  import("@vercel/analytics")
+    .then(({ track }) => track(event, clean))
+    .catch(() => {
+      // 分析脚本不可用不影响主流程
+    });
+}
+
 export function getAnonId(): string {
   if (anonId) return anonId;
   if (typeof localStorage !== "undefined") {
@@ -54,6 +75,7 @@ export function track(event: EventName, props: Record<string, unknown> = {}): vo
   }
   ring.push({ event, props: clean, anonId: getAnonId(), ts: Date.now() });
   if (ring.length > RING_SIZE) ring.shift();
+  (dispatcher ?? defaultDispatcher)(event, clean);
   if (typeof console !== "undefined") console.debug("[riskfit]", event, clean);
 }
 
