@@ -33,10 +33,11 @@ export function setDispatcher(fn: Dispatcher | null): void {
 
 function defaultDispatcher(event: EventName, props: Record<string, unknown>): void {
   if (typeof window === "undefined") return;
-  // Vercel Analytics 只接受 string|number|boolean|null，其余值丢弃
-  const clean = Object.fromEntries(
-    Object.entries(props).filter(([, v]) => ["string", "number", "boolean"].includes(typeof v)),
-  );
+  // Vercel Analytics 只接受 string|number|boolean，其余值丢弃
+  const clean: Record<string, string | number | boolean> = {};
+  for (const [k, v] of Object.entries(props)) {
+    if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") clean[k] = v;
+  }
   import("@vercel/analytics")
     .then(({ track }) => track(event, clean))
     .catch(() => {
