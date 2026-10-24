@@ -71,7 +71,7 @@ RiskFit 的计算引擎同时以 MCP（Model Context Protocol）工具发布：`
 
 ## 技术栈与结构
 
-Next.js 15 (App Router) · TypeScript · Tailwind · Vitest（94 个单元测试）· MCP（官方 SDK）· GLM/Qwen（OpenAI 兼容，可切换）· Vercel
+Next.js 15 (App Router) · TypeScript · Tailwind · Vitest（106 个单元测试）· MCP（官方 SDK）· GLM/Qwen（OpenAI 兼容，可切换）· Vercel
 
 ```
 src/lib/engine/   纯函数计算引擎（对齐/指标/评分卡/情景），CLI 可独立验证
@@ -88,8 +88,9 @@ src/app/          落地页 + 体检流（编辑/进度/报告，报告可编码
 ```bash
 npm install
 npm run dev          # http://localhost:3000
-npm test             # 94 个单元测试
+npm test             # 106 个单元测试
 npm run eval         # badcase 评测集（引擎极端输入 / API 校验绕过 / 真实 LLM 对抗）
+npm run eval:trajectory  # 轨迹评测（真实模型 + 真实 MCP 工具，需 key，离线 SKIP）
 npm run verify:ai    # 真实 AI 报告端到端验证
 npm run mcp          # 本地启动 MCP server（stdio），接入 Claude/元宝/扣子等 agent 客户端
 npm run smoke:mcp    # MCP 集成冒烟（官方 SDK 客户端语义，离线可跑）
@@ -97,18 +98,20 @@ npx tsx scripts/verify-engine.ts        # CLI 验证引擎真数据
 npx tsx scripts/generate-snapshots.ts   # 重新生成演示快照
 ```
 
-**评测体系**：单元测试之外，还有一套 badcase 回归评测（`scripts/eval-badcases.ts`，15 个用例）：
-- **A 层·引擎**：纯 crypto 组合、90% 极端集中、2/8 持仓边界、负相关对、零方差序列、2008 未上市资产代理、极端金额、校验器对抗
-- **B 层·API**：单持仓/未知代码/零金额/九持仓/负金额五类绕过尝试，全部 400 中文可读
-- **C 层·AI（真实模型）**：常规与极端组合下，LLM 输出必须通过数字溯源校验；违规典型——编造数字（99.9%）、换算单位（3.5 万）、由回撤率推算余额（"10 万跌至 16580"）——全部被拦截
+**评测体系**：单元测试之外，还有两层对抗评测：
+- **badcase 回归**（`scripts/eval-badcases.ts`，15 个用例）：
+  - **A 层·引擎**：纯 crypto 组合、90% 极端集中、2/8 持仓边界、负相关对、零方差序列、2008 未上市资产代理、极端金额、校验器对抗
+  - **B 层·API**：单持仓/未知代码/零金额/九持仓/负金额五类绕过尝试，全部 400 中文可读
+  - **C 层·AI（真实模型）**：常规与极端组合下，LLM 输出必须通过数字溯源校验；违规典型——编造数字（99.9%）、换算单位（3.5 万）、由回撤率推算余额（"10 万跌至 16580"）——全部被拦截
+- **轨迹评测**（`scripts/eval-trajectory.ts`，真实模型 + 真实 MCP 工具）：评测对象从输出文本升级为**工具调用轨迹**——最小 agent 运行器驱动模型经 MCP 工具取数后叙述，硬门槛 = 报告里每个数字必须溯源到第一方工具返回（用户问题里的数字永不进白名单，防钓鱼洗白）、无买卖建议、免责在场。五类对抗用例（常规问询/未知代码/诱导编造/单持仓边界/口径合规），八轮迭代拦截五类偏差——其中「汇总推算」（模型自己把三个持仓加总成总资产）是 agent 场景独有的第 4 类幻觉
 
 
 AI 层需要 `.env.local`（复制 `.env.example`），三个环境变量：`AI_API_KEY`（必填，缺失时自动降级为模板报告）、`AI_BASE_URL`（默认智谱 GLM `https://open.bigmodel.cn/api/paas/v4`，Qwen 用 `https://dashscope.aliyuncs.com/compatible-mode/v1`）、`AI_MODEL`（默认 `glm-4-flash`）。
 
 ## Roadmap
 
-- **已完成**：报告分享卡片（隐私分层）；**MCP 工具 `portfolio_risk_checkup`**——引擎成为 agent 生态的基础设施（2026-10-24）
-- **v2**：对话式追问 agent（同一工具集 + 轨迹评测：每个数字必须溯源到某次工具调用）、历史风暴穿越沙盘（把今天的组合放回 2008/2022 逐日重放）、港币联系汇率雷达
+- **已完成**：报告分享卡片（隐私分层）；**MCP 工具 `portfolio_risk_checkup`**——引擎成为 agent 生态的基础设施（2026-10-24）；**轨迹评测**——评测对象从输出文本升级为工具调用轨迹（同日）
+- **v2**：对话式追问 UI（运行器与轨迹评测已就绪；接入 web 的门槛=评测连续通过）、历史风暴穿越沙盘（把今天的组合放回 2008/2022 逐日重放）、港币联系汇率雷达
 - **Idea 库**：多智能体风控委员会（多头/风控/合规辩论，编排层升级；触发条件=AI Agent 岗面试前两天）、AI 投顾合规质检员（独立 B 端项目）、crypto 杠杆清算模拟器
 
 ## 项目文档（0→1 全过程）

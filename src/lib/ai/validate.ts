@@ -2,8 +2,9 @@
 
 import type { AiReport, EngineOutput } from "@/lib/types";
 
-/** 报告里允许出现、但引擎 JSON 里未必有的"无害"数字（评分制 1-10、VaR95 名称、三个风险点等）。 */
-const SAFE_NUMBERS = new Set(["1", "2", "3", "10", "30", "95", "100"]);
+/** 报告里允许出现、但引擎 JSON 里未必有的"无害"数字（评分制 1-10、VaR95 名称、三个风险点等）。
+ *  导出复用：轨迹溯源（src/lib/agent/grounding.ts）与输出校验共用同一份安全数字。 */
+export const SAFE_NUMBERS = new Set(["1", "2", "3", "10", "30", "95", "100"]);
 
 function collectNumbers(v: unknown, into: Set<string>, strings: string[] = []): string[] {
   if (typeof v === "number") {
