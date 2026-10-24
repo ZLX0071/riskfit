@@ -18,8 +18,9 @@ export function buildPrompt(engine: EngineOutput): { system: string; user: strin
   return { system, user };
 }
 
-/** 喂给 LLM 的数字做人性化舍入：|n|<1 保 4 位小数、|n|≥1 保 2 位——模型只能引用这些形态，校验白名单与之对应。 */
-function roundForPrompt(value: unknown): unknown {
+/** 喂给 LLM 的数字做人性化舍入：|n|<1 保 4 位小数、|n|≥1 保 2 位——模型只能引用这些形态，校验白名单与之对应。
+ *  同一舍入规则也用于 MCP 工具输出：prompt 契约与工具契约保持一致的数字形态。 */
+export function roundForPrompt(value: unknown): unknown {
   if (typeof value === "number") {
     if (!Number.isFinite(value)) return null;
     return Math.abs(value) < 1 ? Number(value.toFixed(4)) : Number(value.toFixed(2));

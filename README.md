@@ -63,14 +63,23 @@ AI 体检报告：体质分(1–10) + 三个主要风险点 + 三个自查问题
 
 数据层三级兜底：**进程内缓存（12h）→ 实时接口（Yahoo Finance / Binance K 线）→ 内置快照**。任何一级失败不向上抛；全部失败时接口返回可读错误而非 500。内置快照是部署时从真实数据源生成的全量历史（约 0.4MB），所以演示模式给出的依然是真数字。
 
+## 作为 Agent 生态的能力（MCP）
+
+RiskFit 的计算引擎同时以 MCP（Model Context Protocol）工具发布：`portfolio_risk_checkup`（组合风险体检）+ `list_supported_assets`（白名单资产目录）。任何 agent（Claude Desktop、元宝、扣子、自建 harness）都能调用这套体检能力——这是「计算与叙述分离」在 agent 生态的延伸：**工具只输出引擎结构化结果与静态口径导读，叙述权在调用方 agent**；输出里每个数字都来自引擎或用户输入，失败返回中文契约错误而非内部异常。web 应用与 MCP 工具共享同一条引擎装配链路（一个能力、两个交付面）。
+
+设计映射（来自企业 agent 平台的工程概念）与 v2 路线见 [MCP 与 agent 化设计](docs/superpowers/specs/2026-10-24-mcp-agent-upgrade.md)；接入配置示例在同一文档。
+
 ## 技术栈与结构
 
-Next.js 15 (App Router) · TypeScript · Tailwind · Vitest（62 个单元测试）· GLM/Qwen（OpenAI 兼容，可切换）· Vercel
+Next.js 15 (App Router) · TypeScript · Tailwind · Vitest（94 个单元测试）· MCP（官方 SDK）· GLM/Qwen（OpenAI 兼容，可切换）· Vercel
 
 ```
 src/lib/engine/   纯函数计算引擎（对齐/指标/评分卡/情景），CLI 可独立验证
 src/lib/data/     数据层（抓取+解析+缓存+快照+三级兜底）
 src/lib/ai/       AI 叙事层（prompt/数字校验/模板兜底）
+src/lib/api/      请求校验与引擎装配（web API 与 MCP 工具共用同一条链路）
+src/lib/security/ 每 IP 限流 + AI 日预算熔断
+src/mcp/          MCP 工具层（把引擎暴露给任意 agent）
 src/app/          落地页 + 体检流（编辑/进度/报告，报告可编码进 URL 分享）
 ```
 
@@ -79,9 +88,11 @@ src/app/          落地页 + 体检流（编辑/进度/报告，报告可编码
 ```bash
 npm install
 npm run dev          # http://localhost:3000
-npm test             # 72 个单元测试
+npm test             # 94 个单元测试
 npm run eval         # badcase 评测集（引擎极端输入 / API 校验绕过 / 真实 LLM 对抗）
 npm run verify:ai    # 真实 AI 报告端到端验证
+npm run mcp          # 本地启动 MCP server（stdio），接入 Claude/元宝/扣子等 agent 客户端
+npm run smoke:mcp    # MCP 集成冒烟（官方 SDK 客户端语义，离线可跑）
 npx tsx scripts/verify-engine.ts        # CLI 验证引擎真数据
 npx tsx scripts/generate-snapshots.ts   # 重新生成演示快照
 ```
@@ -96,9 +107,9 @@ AI 层需要 `.env.local`（复制 `.env.example`），三个环境变量：`AI_
 
 ## Roadmap
 
-- **v1.5**：多智能体风控委员会（多头分析师 / 风控官 / 合规官辩论出报告）、报告分享卡片
-- **v2**：历史风暴穿越沙盘（把今天的组合放回 2008/2022 逐日重放）、港币联系汇率雷达
-- **Idea 库**：AI 投顾合规质检员（独立 B 端项目）、crypto 杠杆清算模拟器
+- **已完成**：报告分享卡片（隐私分层）；**MCP 工具 `portfolio_risk_checkup`**——引擎成为 agent 生态的基础设施（2026-10-24）
+- **v2**：对话式追问 agent（同一工具集 + 轨迹评测：每个数字必须溯源到某次工具调用）、历史风暴穿越沙盘（把今天的组合放回 2008/2022 逐日重放）、港币联系汇率雷达
+- **Idea 库**：多智能体风控委员会（多头/风控/合规辩论，编排层升级；触发条件=AI Agent 岗面试前两天）、AI 投顾合规质检员（独立 B 端项目）、crypto 杠杆清算模拟器
 
 ## 项目文档（0→1 全过程）
 

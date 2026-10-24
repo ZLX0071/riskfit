@@ -8,14 +8,18 @@
     "start": "next start",
     "test": "vitest run",
     "eval": "tsx scripts/eval-badcases.ts",
-    "verify:ai": "tsx scripts/verify-ai.ts"
+    "verify:ai": "tsx scripts/verify-ai.ts",
+    "mcp": "tsx src/mcp/start-stdio.ts",
+    "smoke:mcp": "tsx scripts/mcp-smoke.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "@vercel/analytics": "^2.0.1",
     "next": "^15.5.27",
     "qrcode": "^1.5.4",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
